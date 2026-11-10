@@ -1,0 +1,135 @@
+
+package com.example.cieplozimno
+
+import android.os.Bundle
+import android.widget.Button
+import android.widget.SeekBar
+import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import kotlin.random.Random
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var guess: TextView
+    private lateinit var points: TextView
+    private lateinit var atts: TextView
+    private lateinit var hint: TextView
+    private lateinit var range: TextView
+
+    private lateinit var seekBar: SeekBar
+    private lateinit var switch1: Switch
+    private lateinit var button: Button
+
+    private var secretNumber = 0
+    private var score = 0
+    private var attempts = 0
+    private var maxNumber = 100
+    private var userGuess = 50
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Pobieranie elementów
+        guess = findViewById(R.id.guess)
+        points = findViewById(R.id.points)
+        atts = findViewById(R.id.atts)
+        hint = findViewById(R.id.hint)
+        range = findViewById(R.id.range)
+
+        seekBar = findViewById(R.id.seekBar)
+        switch1 = findViewById(R.id.switch1)
+        button = findViewById(R.id.button)
+
+        // Nowa gra
+        newGame()
+
+        // Obsługa suwaka
+        seekBar.setOnSeekBarChangeListener(object :
+            SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(
+                seekBar: SeekBar,
+                progress: Int,
+                fromUser: Boolean
+            ) {
+                userGuess = progress
+                guess.text = "Twój typ: $userGuess"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {}
+        })
+
+        // Tryb trudny
+        switch1.setOnCheckedChangeListener { _, isChecked ->
+
+            maxNumber = if (isChecked) 100 else 50
+
+            seekBar.max = maxNumber
+
+            range.text = "Zakres: 0–$maxNumber"
+
+            if (userGuess > maxNumber) {
+                seekBar.progress = maxNumber
+            }
+
+            newGame()
+            hint.text = "Wskazówka: Spróbuj!"
+        }
+
+        // Przycisk sprawdzania
+        button.setOnClickListener {
+            checkGuess()
+        }
+    }
+
+    // Losowanie liczby
+    private fun newGame() {
+        secretNumber = Random.nextInt(0, maxNumber + 1)
+    }
+
+    // Sprawdzanie odpowiedzi
+    private fun checkGuess() {
+
+        attempts++
+        atts.text = "Próby: $attempts"
+
+        val difference = kotlin.math.abs(secretNumber - userGuess)
+
+        if (userGuess == secretNumber) {
+
+            score += 10
+            points.text = "Punkty: $score"
+
+            hint.text = "Wskazówka: Brawo! Zgadłeś!"
+
+            Toast.makeText(
+                this,
+                "Gratulacje! Zdobywasz 10 punktów!",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            newGame()
+
+        } else if (difference <= 5) {
+
+            hint.text = "Wskazówka: Bardzo gorąco!"
+
+        } else if (difference <= 15) {
+
+            hint.text = "Wskazówka: Ciepło!"
+
+        } else if (difference <= 30) {
+
+            hint.text = "Wskazówka: Zimno!"
+
+        } else {
+
+            hint.text = "Wskazówka: Bardzo zimno!"
+        }
+    }
+}
