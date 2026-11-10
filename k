@@ -70,3 +70,43 @@ class MainActivity : AppCompatActivity() {
         switch1.setOnCheckedChangeListener { button, bool ->  }
     }
 }
+
+Losowa liczba
+o Po uruchomieniu aplikacji losowana jest liczba target z zakresu 0–100
+(włącznie).
+2. Wybór strzału
+o SeekBar: min=0, max=100.
+o Obok/poniżej TextView pokazuje: „Twój typ: X”.
+3. Sprawdzanie
+o Button z napisem „Sprawdź”.
+o Po kliknięciu:
+▪ Jeśli guess == target → komunikat „Trafione! +10 pkt”, punkty += 10,
+gra automatycznie losuje nowy target, resetuje licznik prób i
+poprzedni dystans (patrz pkt 4).
+▪ Jeśli nie trafiono → wyświetl:
+▪ „Cieplej” jeśli |guess−target| < |poprzedni_guess−target|
+▪ „Zimniej” jeśli |guess−target| ≥ |poprzedni_guess−target|
+▪ Zawsze aktualizuj TextView z punktami i liczbą prób.
+4. Pamiętanie ostatniego dystansu
+o Przechowuj lastDistance (dla pierwszej próby traktuj brak porównania i
+wyświetl np. „Spróbuj!”).
+5. Tryb trudny (Switch)
+o Switch podpisany „Tryb trudny”.
+o Gdy OFF (domyślnie): brak limitu prób, za pudło 0 pkt, tylko podpowiedzi.
+o Gdy ON:
+▪ Startowo 7 prób na jedną liczbę. Każde „Sprawdź” zmniejsza próby
+o 1.
+▪ Gdy liczba prób spadnie do 0 i nie trafiono → „Koniec rundy: −5 pkt”,
+punkty −= 5, losuj nowy target, resetuj próby na 7, wyczyść
+lastDistance.
+▪ Dodatkowa zasada: jeżeli w momencie kliknięcia SeekBar > 90,
+nalicz karę −2 pkt (komunikat w TextView), niezależnie od
+trafienia/nie. (To świadome nawiązanie do poprzedniej aplikacji, ale
+inny efekt niż zerowanie).
+6. Zerowanie gry
+o Długie naciśnięcie przycisku „Sprawdź” (long click) resetuje całą grę:
+punkty=0, próby (jeśli trudny)=7, losuje się nowy target, czyści komunikaty.
+(Jeśli nie chcecie long clicka — można dodać drugi Button „Reset”, ale
+nie jest wymagany).
+7. Jeden ekran / jedno Activity
+o Całość w MainActivity (Kotlin), layout np. activity_main.xml.
