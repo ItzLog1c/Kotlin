@@ -1,0 +1,143 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+
+// Struktura przechowująca dane pojedynczego uczestnika
+struct Uczestnik {
+    string nazwisko;
+    string imie;
+    int punkty;
+};
+
+// 1. Funkcja wczytująca dane z pliku (zwraca liczbę wczytanych uczestników lub -1 w przypadku błędu pliku)
+int wczytajDane(Uczestnik uczestnicy[], const string& nazwaPliku) {
+    ifstream plikWe(nazwaPliku);
+    if (!plikWe.is_open()) {
+        return -1; // Kod błędu: nie udało się otworzyć pliku
+    }
+
+    int licznik = 0;
+    while (licznik < 100 && plikWe >> uczestnicy[licznik].nazwisko >> uczestnicy[licznik].imie >> uczestnicy[licznik].punkty) {
+        licznik++;
+    }
+    plikWe.close();
+    return licznik;
+}
+
+// 2. Funkcja wypisująca na ekranie ponumerowaną listę uczestników
+void wypiszUczestnikow(const Uczestnik uczestnicy[], int liczbaUczestnikow) {
+    cout << "Ponumerowana lista uczestnikow:" << endl;
+    for (int i = 0; i < liczbaUczestnikow; i++) {
+        cout << i + 1 << ". " << uczestnicy[i].nazwisko << " " << uczestnicy[i].imie << " - " << uczestnicy[i].punkty << " pkt" << endl;
+    }
+}
+
+// 3. Funkcja obliczająca średnią liczbę punktów
+double obliczSrednia(const Uczestnik uczestnicy[], int liczbaUczestnikow) {
+    double suma = 0;
+    for (int i = 0; i < liczbaUczestnikow; i++) {
+        suma += uczestnicy[i].punkty;
+    }
+    return suma / liczbaUczestnikow;
+}
+
+// Funkcja pomocnicza: znajduje indeks uczestnika z największą liczbą punktów
+int znajdzZwyciezce(const Uczestnik uczestnicy[], int liczbaUczestnikow) {
+    int max_pkt = -1;
+    int indeks_zwyciezcy = 0;
+    for (int i = 0; i < liczbaUczestnikow; i++) {
+        if (uczestnicy[i].punkty > max_pkt) {
+            max_pkt = uczestnicy[i].punkty;
+            indeks_zwyciezcy = i;
+        }
+    }
+    return indeks_zwyciezcy;
+}
+
+// 4. Funkcja zapisująca podsumowanie do pliku raport.txt
+void zapiszRaport(const Uczestnik uczestnicy[], int liczbaUczestnikow, double srednia, int indeksZwyciezcy, const string& nazwaRaportu) {
+    ofstream plikRaport(nazwaRaportu);
+    if (plikRaport.is_open()) {
+        plikRaport << "Podsumowanie wynikow:\n";
+        plikRaport << "Liczba uczestnikow: " << liczbaUczestnikow << "\n";
+        plikRaport << "Srednia punktow: " << fixed << setprecision(2) << srednia << "\n";
+        plikRaport << "Zwyciezca: " << uczestnicy[indeksZwyciezcy].nazwisko << " " << uczestnicy[indeksZwyciezcy].imie 
+                   << " (" << uczestnicy[indeksZwyciezcy].punkty << " pkt)\n";
+        
+        plikRaport << "\nLista osob, ktore zdobyly co najmniej 50 punktow:\n";
+        for (int i = 0; i < liczbaUczestnikow; i++) {
+            if (uczestnicy[i].punkty >= 50) {
+                plikRaport << "- " << uczestnicy[i].nazwisko << " " << uczestnicy[i].imie << " (" << uczestnicy[i].punkty << " pkt)\n";
+            }
+        }
+        plikRaport.close();
+        cout << "\nRaport zostal pomyslnie zapisany w pliku " << nazwaRaportu << "." << endl;
+    } else {
+        cerr << "Blad: Nie udalo sie utworzyc pliku " << nazwaRaportu << "!" << endl;
+    }
+}
+
+// 5. Funkcja dopisująca nowego uczestnika na końcu pliku
+void dopiszUczestnika(const string& nazwaPliku) {
+    cout << "\n--- Dodawanie nowego uczestnika ---" << endl;
+    string nowe_nazwisko, nowe_imie;
+    int nowe_punkty;
+
+    cout << "Podaj nazwisko: ";
+    cin >> nowe_nazwisko;
+    cout << "Podaj imie: ";
+    cin >> nowe_imie;
+    cout << "Podaj liczbe punktow: ";
+    cin >> nowe_punkty;
+
+    ofstream plikWy(nazwaPliku, ios::app); 
+    if (plikWy.is_open()) {
+        plikWy << nowe_nazwisko << " " << nowe_imie << " " << nowe_punkty << "\n";
+        plikWy.close();
+        cout << "Nowy uczestnik zostal dopisany do pliku " << nazwaPliku << "." << endl;
+    } else {
+        cerr << "Blad: Nie udalo sie otworzyc pliku " << nazwaPliku << " do zapisu!" << endl;
+    }
+}
+
+int main() {
+    const string plikZDanymi = "wyniki.txt";
+    const string plikZRaportem = "raport.txt";
+    Uczestnik uczestnicy[100];
+
+    // Wywołanie funkcji wczytującej dane
+    int licznik = wczytajDane(uczestnicy, plikZDanymi);
+
+    // Obsługa błędów otwarcia pliku
+    if (licznik == -1) {
+        cerr << "Blad: Nie udalo sie otworzyc pliku " << plikZDanymi << "!" << endl;
+        return 1;
+    }
+
+    // Sprawdzenie, czy plik jest pusty
+    if (licznik == 0) {
+        cout << "Plik " << plikZDanymi << " jest pusty. Raport nie zostanie utworzony." << endl;
+    } else {
+        // Wywołanie funkcji wyświetlającej listę
+        wypiszUczestnikow(uczestnicy, licznik);
+
+        // Wywołanie funkcji obliczających statystyki
+        double srednia = obliczSrednia(uczestnicy, licznik);
+        int indeksZwyciezcy = znajdzZwyciezce(uczestnicy, licznik);
+
+        cout << "\nSrednia liczba punktow: " << fixed << setprecision(2) << srednia << endl;
+        cout << "Zwyciezca: " << uczestnicy[indeksZwyciezcy].nazwisko << " " << uczestnicy[indeksZwyciezcy].imie 
+             << " (" << uczestnicy[indeksZwyciezcy].punkty << " pkt)" << endl;
+
+        // Wywołanie funkcji generującej raport
+        zapiszRaport(uczestnicy, licznik, srednia, indeksZwyciezcy, plikZRaportem);
+    }
+
+    // Wywołanie funkcji dopisującej uczestnika
+    dopiszUczestnika(plikZDanymi);
+
+    return 0;
+}
