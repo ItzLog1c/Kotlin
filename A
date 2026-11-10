@@ -1,0 +1,231 @@
+
+package com.example.pracazsuwakiem
+
+import android.os.Bundle
+import android.widget.Button
+import android.widget.SeekBar
+import android.widget.Switch
+import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import kotlin.random.Random
+import kotlin.math.abs
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var guess: TextView
+    private lateinit var points: TextView
+    private lateinit var atts: TextView
+    private lateinit var hint: TextView
+
+    private lateinit var seekBar: SeekBar
+    private lateinit var switch1: Switch
+    private lateinit var button: Button
+
+    private var target = 0
+    private var score = 0
+    private var attempts = 0
+    private var lastDistance: Int? = null
+
+    private var hardMode = false
+    private var maxAttempts = 7
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                systemBars.bottom
+            )
+            insets
+        }
+
+        // Pobieranie elementów
+        guess = findViewById(R.id.guess)
+        points = findViewById(R.id.points)
+        atts = findViewById(R.id.atts)
+        hint = findViewById(R.id.hint)
+
+        seekBar = findViewById(R.id.seekBar)
+        switch1 = findViewById(R.id.switch1)
+        button = findViewById(R.id.button)
+
+        // Ustawienia początkowe
+        seekBar.max = 100
+        switch1.isChecked = false
+
+        newGame()
+
+        seekBar.setOnSeekBarChangeListener(object :
+            SeekBar.OnSeekBarChangeListener {
+
+            override fun onProgressChanged(
+                seekBar: SeekBar?,
+                progress: Int,
+                fromUser: Boolean
+            ) {
+                guess.text = "Twój typ: $progress"
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        // Tryb trudny
+        switch1.setOnCheckedChangeListener { _, isChecked ->
+
+            hardMode = isChecked
+
+            attempts = 0
+            lastDistance = null
+
+            newGame()
+
+            hint.text = "Wskazówka: Spróbuj!"
+
+            updateAttempts()
+        }
+
+        // Sprawdzanie liczby
+        button.setOnClickListener {
+            checkGuess()
+        }
+
+        // Reset gry przez długie naciśnięcie
+        button.setOnLongClickListener {
+
+            resetGame()
+
+            true
+        }
+    }
+
+    // Losowanie nowej liczby
+    private fun newGame() {
+        target = Random.nextInt(0, 101)
+    }
+
+    // Aktualizacja prób
+    private fun updateAttempts() {
+
+        if (hardMode) {
+            atts.text = "Próby: ${maxAttempts - attempts}"
+        } else {
+            atts.text = "Próby: $attempts"
+        }
+    }
+
+    // Aktualizacja punktów
+    private fun updatePoints() {
+        points.text = "Punkty: $score"
+    }
+
+    // Sprawdzanie liczby
+    private fun checkGuess() {
+
+        val userGuess = seekBar.progress
+
+        // Kara za wybranie liczby powyżej 90
+        var penaltyMessage = ""
+
+        if (userGuess > 90) {
+            score -= 2
+            penaltyMessage = " Kara: -2 pkt!"
+        }
+
+        // Obliczanie dystansu
+        val distance = abs(userGuess - target)
+
+        // Zwiększanie prób
+        attempts++
+
+        // Trafienie
+        if (userGuess == target) {
+
+            score += 10
+
+            Toast.makeText(
+                this,
+                "Trafione! +10 pkt",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            hint.text = "Trafione! +10 pkt.$penaltyMessage"
+
+            // Nowa runda
+            attempts = 0
+            lastDistance = null
+
+            newGame()
+
+        } else {
+
+            // Sprawdzanie temperatury
+            if (lastDistance == null) {
+
+                hint.text = "Spróbuj!$penaltyMessage"
+
+            } else if (distance < lastDistance!!) {
+
+                hint.text = "Cieplej!$penaltyMessage"
+
+            } else {
+
+                hint.text = "Zimniej!$penaltyMessage"
+            }
+
+            // Zapamiętanie ostatniego dystansu
+            lastDistance = distance
+
+            // Sprawdzanie trybu trudnego
+            if (hardMode && attempts >= maxAttempts) {
+
+                score -= 5
+
+                hint.text = "Koniec rundy: -5 pkt!$penaltyMessage"
+
+                attempts = 0
+                lastDistance = null
+
+                newGame()
+            }
+        }
+
+        updatePoints()
+        updateAttempts()
+    }
+
+    // Reset całej gry
+    private fun resetGame() {
+
+        score = 0
+        attempts = 0
+        lastDistance = null
+
+        newGame()
+
+        seekBar.progress = 50
+
+        guess.text = "Twój typ: 50"
+        hint.text = "Wskazówka: Spróbuj!"
+
+        updatePoints()
+        updateAttempts()
+
+        Toast.makeText(
+            this,
+            "Gra została zresetowana!",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+}
